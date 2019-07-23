@@ -4,6 +4,10 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np 
 import math 
+import time
+start = time.time()
+
+
 n = []
 #z = []
 T = []
@@ -34,7 +38,7 @@ with open('totalnumberdensity.csv') as csvDataFile:
     for row in csvReader:
         N.append(row[1])
 
-noz2 = 400001
+noz2 = 400001  # = (no. of km)*1000 + 1 
 
 z = np.arange(0,noz2*res,res)  # instead of importing z!!
 
@@ -63,14 +67,16 @@ for i in range(0, len(N)):
 T0 = 273.15
 P0 = 1013.25
 lamb = 630*1e-9 # wavelength in m 
-lambm = 0.532 # wavelength in micrometers
+
 
 delta = 0.031 # air depolarization factor -> in general will be a function of gas composition and hence z
 
-nc1 = np.ones(noz) # for Rayliegh scattering calculation 
-nc = np.array(nc1, dtype = complex)
-cn = np.zeros(noz)
-bm2 = np.zeros(noz)
+# =============================================================================
+# nc1 = np.ones(noz) # for Rayliegh scattering calculation 
+# nc = np.array(nc1, dtype = complex)
+# cn = np.zeros(noz)
+# bm2 = np.zeros(noz)
+# =============================================================================
 
 Cn2 = np.zeros(noz2)
 #wbf = np.zeros(noz2) #  for free space calculations 
@@ -81,13 +87,15 @@ cob = np.zeros(noz2)
 phi = np.zeros(noz2)
 
 # ============================ molecular scattering -> Rayleigh scattering ============================
-
-for i in range(0,len(n)):
-    
-    bm2[i] = ((24*math.pi*math.pi*math.pi)/(N[i]*math.pow(lamb,4)))*math.pow(((n[i]*n[i] - 1)/(n[i]*n[i] + 1)),2)*((6 + 3*delta)/(6 - 7*delta))
-    cn[i] = bm2[i]*lamb/(4*math.pi)
-    nc[i] = n[i] + bm2[i]*1j  # exact formula 
-
+# =============================================================================
+# 
+# for i in range(0,len(n)):
+#     
+#     bm2[i] = ((24*math.pi*math.pi*math.pi)/(N[i]*math.pow(lamb,4)))*math.pow(((n[i]*n[i] - 1)/(n[i]*n[i] + 1)),2)*((6 + 3*delta)/(6 - 7*delta))
+#     cn[i] = bm2[i]*lamb/(4*math.pi)
+#     nc[i] = n[i] + bm2[i]*1j  # exact formula 
+# 
+# =============================================================================
 #-------------------------------------- Turbulence calculations ----------------------------------------------
 
 # ============================ SLC-Day model for turbulence ======================================
@@ -139,14 +147,16 @@ def GurCncalc(Cn2G0):
  
     return(Cn2G)
 
-Cn2G0 = 1.5e-13  
+Cn2G0 = 1.5e-13 # in strong turbulence regime  
 Cn2G = GurCncalc(Cn2G0)
 Cn2G1 = GurCncalc(1e-14)
 Cn2G2 = GurCncalc(1e-15)
 Cn2G3 = GurCncalc(1e-16)
+
+
 # Gaussian beam waist calculation -> see how width of beam varies with distance 
 w0 = 0.5 # beam waist of Gaussian beam 
-R0 = 1e10 # radius of curvature of the beam phase front
+R0 = 1e10 # radius of curvature of the beam phase front - large = collimated beam 
 k = 2*math.pi/lamb # wavenumber
 cobs = 1 # spatial coherence properties of the signal-carrying laser beam as it exits the transmitter 
 # (ζS = 1 for a coherent beam, ζS > 1 for a partially coherent beam)
@@ -158,7 +168,7 @@ zrecgcomps = np.zeros(offsetSLC + 1)
 
 zrecgcomp = np.zeros(noz2) 
 offsetGur1 = 2
-upperlimGur = 20  # defined upper limit of turbulence model - after which turbulence assumed to be negligable 
+upperlimGur = 20  # defined upper altitude limit of turbulence model in km - after which turbulence assumed to be negligable 
 offsetGur = upperlimGur*1000 
 
 #------------------------------------ Beam size calcs --------------------------------------------------#
@@ -206,10 +216,10 @@ def freespace(w0,R0,z,k,noz2):
 
     wbf = np.zeros(noz2)
     Rbf = np.zeros(noz2)
-    def freespacebeam(w0,R0,z1,k):
-        wbf = w0*math.pow((math.pow((R0 - z1*1000)/R0, 2) + math.pow((2*z1*1000)/(k*w0*w0), 2)), 0.5)
-        Rbf = (z1*1000*(math.pow((R0 - z1*1000)/R0, 2) + math.pow((2*z1*1000)/(k*w0*w0), 2)))/(math.pow((R0 - z1*1000)/R0, 2)*(1 - math.pow((R0 - z1*1000)/R0, 2)) - math.pow((2*z1*1000)/(k*w0*w0), 2) )
-        return(wbf,Rbf)
+    #def freespacebeam(w0,R0,z1,k):
+    #    wbf = w0*math.pow((math.pow((R0 - z1*1000)/R0, 2) + math.pow((2*z1*1000)/(k*w0*w0), 2)), 0.5)
+    #    Rbf = (z1*1000*(math.pow((R0 - z1*1000)/R0, 2) + math.pow((2*z1*1000)/(k*w0*w0), 2)))/(math.pow((R0 - z1*1000)/R0, 2)*(1 - math.pow((R0 - z1*1000)/R0, 2)) - math.pow((2*z1*1000)/(k*w0*w0), 2) )
+    #    return(wbf,Rbf)
     
     for i in range(1,noz2):
         wbf[i] = freespacebeam(w0,R0,z[i],k)[0]
@@ -219,8 +229,8 @@ def freespace(w0,R0,z,k,noz2):
 # free space 
 wtest = [0.1,0.5,1]
 
-wbf1 = freespace(wtest[0],R0,z,k,noz2)[0]
-Rbf1 = freespace(wtest[0],R0,z,k,noz2)[1] 
+wbf1 = freespace(wtest[1],R0,z,k,noz2)[0]
+Rbf1 = freespace(wtest[1],R0,z,k,noz2)[1] 
 #wbf2 = freespace(wtest[1],R0,z,k,noz2)[0]
 #Rbf2 = freespace(wtest[1],R0,z,k,noz2)[1] 
 #wbf3 = freespace(wtest[2],R0,z,k,noz2)[0]
@@ -234,26 +244,23 @@ Rbf1[0] = R0
 #Rbf3[0] = R0 
 
 
+ng = np.ones(len(z))
+
+for i in range(0,len(n)):
+    ng[i] = n[i]
+    
+
 def turbulenceSLC(w0,R0,z,Cn2,k,cobs):
     
     wb = np.zeros(noz2)
     Rb = np.zeros(noz2)
-    def Turbulencebeam(w0,R0,z,Cn2,k,cobs):
-        cob = cobs + (2*w0*w0)/(math.pow(0.55*Cn2*k*k*z*1000, -6/5))
-        beta2S = 1.52*Cn2*math.pow(z*1000,3)*math.pow(w0, -1/3)
-        wb = w0*math.pow((math.pow((R0 - z*1000)/R0, 2) + cob*math.pow((2*z*1000)/(k*w0*w0), 2)), 0.5) + beta2S
-        phi = ((R0 - z*1000)/R0)/((2*z*1000)/(k*w0*w0)) - ((2*z*1000)/(k*w0*w0))*(w0*w0)/(math.pow(0.55*Cn2*k*k*z*1000, -6/5))
-        Rb = (z*1000*(math.pow((R0 - z*1000)/R0, 2) + cob*math.pow((2*z*1000)/(k*w0*w0), 2)))/(phi*((2*z*1000)/(k*w0*w0)) - cob*math.pow((2*z*1000)/(k*w0*w0), 2) - math.pow((R0 - z*1000)/R0, 2) )
-        sig12s = 1.23*Cn2*math.pow(k,7/6)*math.pow(z, 11/6)  # variables for comparison in (79)
-        zrecgcomps = math.pow(z/(0.5*k*math.pow(wb,2)),5/6)*sig12s
-        
-        return(wb,Rb,sig12s,zrecgcomps)
+    
         
     for i in range(1, noz2): # don't calculate at transmitter, thus start from 1 
-        if z[i] <= 0.019: # Cn2 = 0 here
+        if z[i]/ng[i] <= 0.019: # Cn2 = 0 here
             wb[i] = freespacebeam(w0,R0,z[i],k)[0]
             Rb[i] = freespacebeam(w0,R0,z[i],k)[1]
-        elif z[i] > 0.019 and z[i] <= 20: 
+        elif z[i]/ng[i] > 0.019 and z[i]/ng[i] <= 20: 
             wb[i] = Turbulencebeam(wb[offset1],Rb[offset1],z[i]-0.019,Cn2[i],k,cobs)[0]
             Rb[i] = Turbulencebeam(wb[offset1],Rb[offset1],z[i]-0.019,Cn2[i],k,cobs)[1]
             sig12s[i] = Turbulencebeam(wb[offset1],Rb[offset1],z[i]-0.019,Cn2[i],k,cobs)[2]
@@ -266,9 +273,11 @@ def turbulenceSLC(w0,R0,z,Cn2,k,cobs):
 
 cobsS = [1,100,500]
 
+optz = np.multiply(z,ng)  # replace z with optical distance, Re(n)*z to account for non-freespace 
+
 # Turbulence - SLC DAY model 
-wb = turbulenceSLC(w0,R0,z,Cn2,k,cobsS[0])[0]
-Rb = turbulenceSLC(w0,R0,z,Cn2,k,cobsS[0])[1]
+wb = turbulenceSLC(w0,R0,optz,Cn2,k,cobsS[0])[0]
+Rb = turbulenceSLC(w0,R0,optz,Cn2,k,cobsS[0])[1]
 #wb1 = turbulenceSLC(w0,R0,z,Cn2,k,cobsS[1])[0]
 #Rb1 = turbulenceSLC(w0,R0,z,Cn2,k,cobsS[1])[1]
 #wb2 = turbulenceSLC(w0,R0,z,Cn2,k,cobsS[2])[0]
@@ -284,29 +293,17 @@ Rb[0] = R0
 
 # Gurvich stuff
 
-
 def turbulenceGUR(w0,R0,z,Cn2G,k,cobs):
     
     wbg = np.zeros(noz2)
     Rbg = np.zeros(noz2)
     sig12g = np.zeros(noz2) 
     
-    def Turbulencebeam(w0,R0,z,Cn2G,k,cobs):
-        cob = cobs + (2*w0*w0)/(math.pow(0.55*Cn2*k*k*z*1000, -6/5))
-        beta2S = 1.52*Cn2*math.pow(z*1000,3)*math.pow(w0, -1/3)
-        wb = w0*math.pow((math.pow((R0 - z*1000)/R0, 2) + cob*math.pow((2*z*1000)/(k*w0*w0), 2)), 0.5) + beta2S
-        phi = ((R0 - z*1000)/R0)/((2*z*1000)/(k*w0*w0)) - ((2*z*1000)/(k*w0*w0))*(w0*w0)/(math.pow(0.55*Cn2*k*k*z*1000, -6/5))
-        Rb = (z*1000*(math.pow((R0 - z*1000)/R0, 2) + cob*math.pow((2*z*1000)/(k*w0*w0), 2)))/(phi*((2*z*1000)/(k*w0*w0)) - cob*math.pow((2*z*1000)/(k*w0*w0), 2) - math.pow((R0 - z*1000)/R0, 2) )
-        sig12g = 1.23*Cn2*math.pow(k,7/6)*math.pow(z, 11/6)  # variables for comparison in (79)
-        zrecgcomp = math.pow(z/(0.5*k*math.pow(wb,2)),5/6)*sig12s
-        
-        return(wb,Rb,sig12g,zrecgcomp)
-    
     for i in range(1, noz2): # don't calculate at transmitter, thus start from 1 
-        if z[i] < 0.003: # Gurvich model only defined from 2.5m upwards 
+        if z[i]/ng[i] < 0.003: # Gurvich model only defined from 2.5m upwards 
             wbg[i] = freespacebeam(w0,R0,z[i],k)[0]
             Rbg[i] = freespacebeam(w0,R0,z[i],k)[1]
-        elif z[i] >= 0.003 and z[i] <= upperlimGur:
+        elif z[i]/ng[i] >= 0.003 and z[i]/ng[i] <= upperlimGur:
             wbg[i] = Turbulencebeam(wbg[offsetGur1],Rbg[offsetGur1],z[i]-0.002,Cn2G[i],k,cobs)[0]
             Rbg[i] = Turbulencebeam(wbg[offsetGur1],Rbg[offsetGur1],z[i]-0.002,Cn2G[i],k,cobs)[1]
             sig12g[i] = Turbulencebeam(wbg[offsetGur1],Rbg[offsetGur1],z[i]-0.002,Cn2G[i],k,cobs)[2]
@@ -315,12 +312,15 @@ def turbulenceGUR(w0,R0,z,Cn2G,k,cobs):
             wbg[i] = freespacebeam(wbg[offsetGur],Rbg[offsetGur],z[i]-20,k)[0]
             Rbg[i] = freespacebeam(wbg[offsetGur],Rbg[offsetGur],z[i]-20,k)[1]
 
+    return(wbg,Rbg,sig12g,zrecgcomp) 
 
 cobsG = [1,100,500]
 
 
-wbg = turbulenceSLC(w0,R0,z,Cn2G,k,cobsG[2])[0]
-Rbg = turbulenceSLC(w0,R0,z,Cn2G,k,cobsG[2])[1]
+#test = turbulenceGUR(w0,R0,optz,Cn2G,k,cobsG[0])[0]
+
+wbg = turbulenceGUR(w0,R0,optz,Cn2G,k,cobsG[0])[0]
+Rbg = turbulenceGUR(w0,R0,optz,Cn2G,k,cobsG[0])[1]
 
 #wbg1 = turbulenceSLC(w0,R0,z,Cn2G1,k,cobsG[2])[0]
 #Rbg1 = turbulenceSLC(w0,R0,z,Cn2G1,k,cobsG[2])[1]
@@ -396,17 +396,19 @@ Rbg[0] = R0
 # rest = 0.001 # resolution in altitude, 0.001 = 1m precision 
 
 #======================================= optical depth calculation  =====================================
-taus = np.zeros(noz)
-tau = 0
-
-for i in range(1,noz):
-    
-    taus[i] = ((bm2[i]+bm2[i-1])/2)*((z[i]-z[i-1])*1000) # use a Riemann sum to calculate an approximate 
-    tau = tau + taus[i]                           # value of the optical thickness, tau  
-    
-I0 = 1000  # initial beam intensity in W/m^2
-
-I = I0*math.exp(-tau)
+# =============================================================================
+# taus = np.zeros(noz)
+# tau = 0
+# 
+# for i in range(1,noz):
+#     
+#     taus[i] = ((bm2[i]+bm2[i-1])/2)*((z[i]-z[i-1])*1000) # use a Riemann sum to calculate an approximate 
+#     tau = tau + taus[i]                           # value of the optical thickness, tau  
+#     
+# I0 = 1000  # initial beam intensity in W/m^2
+# 
+# I = I0*math.exp(-tau)
+# =============================================================================
 
 # ===================================================================================================================== 
 
@@ -423,7 +425,7 @@ ax.plot(z, wb, label=SLClabel)
 #ax.plot(z, wb2, label=SLClabel2)
 plt.xlabel('Altitude / km')
 plt.ylabel('Gaussian beam width / m')
-plt.xlim(0,400)
+#plt.xlim(0,400)
 plt.title('Beam width as function of altitude for SLC-Day model')
 ax.legend()
 namelabel = 'beamwidthvszSGf'+ str(w0) + 'R0' + str(R0) + 'cobs'+ str(cobs) + '.png'
@@ -444,15 +446,15 @@ ax.plot(z, wbg, label=glabel )
 #ax.plot(z, wbg3, label=glabel2 )
 plt.xlabel('Altitude / km')
 plt.ylabel('Gaussian beam width / m')
-plt.xlim(0,400)
-plt.ylim(0.5,1.5)
+#plt.xlim(0,400)
+#plt.ylim(0.5,1.5)
 plt.title('Width as function of altitude for Gurvich model')
 ax.legend()
 namelabel = 'wbGURvsw0'+ str(w0) + 'R0' + str(R0) + 'cobs'+ str(cobs) + 'Cn2G0' + str(Cn2G0) + '.png'
 plt.savefig(namelabel, bbox_inches='tight')
 plt.show()
 
-# FREE SPACE PLOT
+# NO TURBULENCE PLOT
 
 fig = plt.figure()
 ax = plt.subplot(111)
@@ -464,7 +466,7 @@ ax.plot(z, wbf1, label=flabel1 )
 #ax.plot(z, wbf3, label=flabel3 )
 plt.xlabel('Altitude / km')
 plt.ylabel('Gaussian beam width / m')
-plt.xlim(0,400)
+#plt.xlim(0,400)
 plt.title('Width as function of altitude for free space')
 ax.legend()
 namelabel = 'wbfvsw0'+ str(w0) + 'R0' + str(R0) + 'cobs'+ str(cobs) + '.png'
@@ -493,4 +495,8 @@ print("zrecgcomp value at 20km for Gurvich model",math.pow(zrecgcomp[20000],0.5)
 print("sig12s value at 20km for SLC-Day model", sig12s[20000])
 
 print("zrecgcomps value at 20km for SLC-Day model",zrecgcomps[20000])
+
+end = time.time()
+print(end - start)
+
 

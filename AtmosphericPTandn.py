@@ -10,7 +10,7 @@ import scipy.integrate as integrate
 
 import pandas as pd
 
-lamdav = 5320  # vacuum wavelength of Lumi laser in Angstrom (either 532nm or 638nm)
+lamdav = 6300  # vacuum wavelength of Lumi laser in Angstrom 
 
 sig = 1/lamdav # free-space wavenumber 
 
@@ -68,10 +68,10 @@ R3 = ((math.pow(n3,2) - 1)/(math.pow(n3,2) + 2))*(1/rho30) # specific refraction
 # for z > 86km, more complex model is used, in terms of kinetic temp, Tk, rather than molecular temp, Tm
 
 # ---------------------------------------------------------------------------------
-
-noz = 10001 # should be equal to (no. of km)/res + 1
+### set to 7407 = 7.407km to calculate n within its region of validity 
+noz = 86001    #7407 # should be equal to (no. of km)/res + 1
 noP = noz
-res = 0.1 # resolution in altitude, 0.001 = 1m precision 
+res = 0.001 # resolution in altitude, 0.001 = 1m precision 
 
 T = numpy.zeros(noz)
 P = numpy.zeros(noz)
@@ -244,91 +244,93 @@ while icc < noz:
      if H[icc] >= 0 and H[icc] <= 11: # b = 0 
          T[icc] = 288.15 - 6.5*H[icc]
          P[icc] = 1013.25*math.pow((288.15/(288.15 - 6.5*H[icc])),(exp/-6.5))
-         N[icc] = (Na*P[icc])/(R*T[icc])
+         N[icc] = (Na*P[icc])/(R*T[icc]*10)
          icc = icc + 1 
      
+      # may need a conversion factor of 1/10 -> look at definition of R in this paper!!!  
+        
      elif H[icc] >11 and H[icc] <= 20: # b = 1
           T[icc] = T[numpy.where(z==11)]
           P[icc] = P[numpy.where(z==11)]*numpy.exp((-g0*M0*(H[icc]-11))/(R*T[numpy.where(z==11)]))
-          N[icc] = (Na*P[icc])/(R*T[icc])
+          N[icc] = (Na*P[icc])/(R*T[icc]*10)
           icc = icc + 1 
           
         
      elif H[icc] > 20 and H[icc] <= 32: # b = 2
           T[icc] = T[numpy.where(z==20)] + (H[icc]-20)
           P[icc] = P[numpy.where(z==20)]*math.pow((T[numpy.where(z==20)]/(T[numpy.where(z==20)] + (H[icc]-20))),(exp/1))
-          N[icc] = (Na*P[icc])/(R*T[icc])
+          N[icc] = (Na*P[icc])/(R*T[icc]*10)
           icc = icc + 1 
       
      elif H[icc] > 32 and H[icc] <= 47: # b = 3
           T[icc] = T[numpy.where(z==32)] + 2.8*(H[icc]-32)
           P[icc] = P[numpy.where(z==32)]*math.pow((T[numpy.where(z==32)]/(T[numpy.where(z==32)] + 2.8*(H[icc]-32))),(exp/2.8))
-          N[icc] = (Na*P[icc])/(R*T[icc])
+          N[icc] = (Na*P[icc])/(R*T[icc]*10)
           icc = icc + 1 
  
           
      elif H[icc] > 47 and H[icc] <= 51: # b = 4
           T[icc] = T[numpy.where(z==47)] 
           P[icc] = P[numpy.where(z==47)]*numpy.exp((-g0*M0*(H[icc]-47))/(R*T[numpy.where(z==47)]))
-          N[icc] = (Na*P[icc])/(R*T[icc])
+          N[icc] = (Na*P[icc])/(R*T[icc]*10)
           icc = icc + 1
          
      elif H[icc] > 51 and H[icc] <= 71: # b = 5
           T[icc] = T[numpy.where(z==51)]  - 2.8*(H[icc]-51)
           P[icc] = P[numpy.where(z==51)]*math.pow((T[numpy.where(z==51)]/(T[numpy.where(z==51)] - 2.8*(H[icc]-51))),(exp/-2.8))
-          N[icc] = (Na*P[icc])/(R*T[icc])
+          N[icc] = (Na*P[icc])/(R*T[icc]*10)
           icc = icc + 1 
      
               
      elif H[icc] > 71 and H[icc] <= 79.5: # b = 6 -> need to modify this, as for z > 86km, Tm is not equal to Tk 
           T[icc] = T[numpy.where(z==71)]  - 2*(H[icc]-71)
           P[icc] = P[numpy.where(z==71)]*math.pow((T[numpy.where(z==71)]/(T[numpy.where(z==71)] - 2*(H[icc]-71))),(exp/-2))
-          N[icc] = (Na*P[icc])/(R*T[icc])
+          N[icc] = (Na*P[icc])/(R*T[icc]*10)
           icc = icc + 1 
     
      elif H[icc] > 79.5 and H[icc] <= 80: # b = 6 -> need to modify this, as for z > 86km, Tm is not equal to Tk 
           T[icc] = T[numpy.where(z==79.5)]  - 2*(H[icc]-79.5)
           T[icc] = T[icc]*0.999996
           P[icc] = P[numpy.where(z==79.5)]*math.pow((T[numpy.where(z==79.5)]/(T[numpy.where(z==79.5)] - 2*(H[icc]-79.5))),(exp/-2))
-          N[icc] = (Na*P[icc])/(R*T[icc])
+          N[icc] = (Na*P[icc])/(R*T[icc]*10)
           icc = icc + 1 
      elif H[icc] > 80 and H[icc] <= 80.5: # b = 6 -> need to modify this, as for z > 86km, Tm is not equal to Tk 
           T[icc] = T[numpy.where(z==80)]  - 2*(H[icc]-80)
           T[icc] = T[icc]*0.999988
           P[icc] = P[numpy.where(z==80)]*math.pow((T[numpy.where(z==80)]/(T[numpy.where(z==80)] - 2*(H[icc]-80))),(exp/-2))
-          N[icc] = (Na*P[icc])/(R*T[icc])
+          N[icc] = (Na*P[icc])/(R*T[icc]*10)
           icc = icc + 1
      elif H[icc] > 80.5 and H[icc] <= 81: # b = 6 -> need to modify this, as for z > 86km, Tm is not equal to Tk 
           T[icc] = T[numpy.where(z==80.5)]  - 2*(H[icc]-80.5)
           T[icc] = T[icc]*0.999969
           P[icc] = P[numpy.where(z==80.5)]*math.pow((T[numpy.where(z==80.5)]/(T[numpy.where(z==80.5)] - 2*(H[icc]-80.5))),(exp/-2))
-          N[icc] = (Na*P[icc])/(R*T[icc]*0.999969)
+          N[icc] = (Na*P[icc])/(R*T[icc]*0.999969*10)
           icc = icc + 1
           
      elif H[icc] > 81 and H[icc] <= 81.5: # b = 6 -> need to modify this, as for z > 86km, Tm is not equal to Tk 
           T[icc] = T[numpy.where(z==81)]  - 2*(H[icc]-81)
           T[icc] = T[icc]*0.999938
           P[icc] = P[numpy.where(z==81)]*math.pow((T[numpy.where(z==81)]/(T[numpy.where(z==81)] - 2*(H[icc]-81))),(exp/-2))
-          N[icc] = (Na*P[icc])/(R*T[icc]*0.999938)
+          N[icc] = (Na*P[icc])/(R*T[icc]*0.999938*10)
           icc = icc + 1
           
      elif H[icc] > 81.5 and H[icc] <= 82: # b = 6 -> need to modify this, as for z > 86km, Tm is not equal to Tk 
           T[icc] = T[numpy.where(z==81.5)]  - 2*(H[icc]-81.5)
           T[icc] = T[icc]*0.999904
           P[icc] = P[numpy.where(z==81.5)]*math.pow((T[numpy.where(z==81.5)]/(T[numpy.where(z==81.5)] - 2*(H[icc]-81.5))),(exp/-2))
-          N[icc] = (Na*P[icc])/(R*T[icc]*0.999904)
+          N[icc] = (Na*P[icc])/(R*T[icc]*0.999904*10)
           icc = icc + 1
      elif H[icc] > 82 and H[icc] <= 82.5: # b = 6 -> need to modify this, as for z > 86km, Tm is not equal to Tk 
           T[icc] = T[numpy.where(z==82)]  - 2*(H[icc]-82)
           T[icc] = T[icc]*0.999864
           P[icc] = P[numpy.where(z==82)]*math.pow((T[numpy.where(z==82)]/(T[numpy.where(z==82)] - 2*(H[icc]-82))),(exp/-2))
-          N[icc] = (Na*P[icc])/(R*T[icc]*0.999864)
+          N[icc] = (Na*P[icc])/(R*T[icc]*0.999864*10)
           icc = icc + 1
      elif H[icc] > 82.5 and H[icc] <= 83: # b = 6 -> need to modify this, as for z > 86km, Tm is not equal to Tk 
           T[icc] = T[numpy.where(z==82.5)]  - 2*(H[icc]-82.5)
           T[icc] = T[icc]*0.999822
           P[icc] = P[numpy.where(z==82.5)]*math.pow((T[numpy.where(z==82.5)]/(T[numpy.where(z==82.5)] - 2*(H[icc]-82.5))),(exp/-2))
-          N[icc] = (Na*P[icc])/(R*T[icc]*0.999822)
+          N[icc] = (Na*P[icc])/(R*T[icc]*0.999822*10)
           icc = icc + 1
           
           
@@ -336,20 +338,20 @@ while icc < noz:
           T[icc] = T[numpy.where(z==83)]  - 2*(H[icc]-83)
           T[icc] = T[icc]*0.999778
           P[icc] = P[numpy.where(z==83)]*math.pow((T[numpy.where(z==83)]/(T[numpy.where(z==83)] - 2*(H[icc]-83))),(exp/-2))
-          N[icc] = (Na*P[icc])/(R*T[icc]*0.999778)
+          N[icc] = (Na*P[icc])/(R*T[icc]*0.999778*10)
           icc = icc + 1
      
      elif H[icc] > 83.5 and H[icc] <= 84: # b = 6 -> need to modify this, as for z > 86km, Tm is not equal to Tk 
           T[icc] = T[numpy.where(z==83.5)]  - 2*(H[icc]-83.5)
           T[icc] = T[icc]*0.999731
           P[icc] = P[numpy.where(z==83.5)]*math.pow((T[numpy.where(z==83.5)]/(T[numpy.where(z==83.5)] - 2*(H[icc]-83.5))),(exp/-2))
-          N[icc] = (Na*P[icc])/(R*T[icc]*0.999731)
+          N[icc] = (Na*P[icc])/(R*T[icc]*0.999731*10)
           icc = icc + 1
      elif H[icc] > 84 and H[icc] <= 86: # b = 6 -> need to modify this, as for z > 86km, Tm is not equal to Tk 
           T[icc] = T[numpy.where(z==84)]  - 2*(H[icc]-84)
           T[icc] = T[icc]*0.999681
           P[icc] = P[numpy.where(z==84)]*math.pow((T[numpy.where(z==84)]/(T[numpy.where(z==84)] - 2*(H[icc]-84))),(exp/-2))
-          N[icc] = (Na*P[icc])/(R*T[icc]*0.999681)
+          N[icc] = (Na*P[icc])/(R*T[icc]*0.999681*10)
           icc = icc + 1 
           
           
@@ -666,7 +668,7 @@ plt.show()
 # dfnAr.to_csv("temperature.csv", index=False)
 # =============================================================================
 
-#dfN = pd.DataFrame({"altitude" : z, "total no density for z below 86km" : N})
-#dfN.to_csv("totalnumberdensity.csv", index=False)
+dfN = pd.DataFrame({"altitude" : z, "total no density for z below 86km" : N})
+dfN.to_csv("totalnumberdensity.csv", index=False)
 
 # =============================================================================

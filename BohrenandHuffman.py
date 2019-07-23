@@ -41,7 +41,7 @@ def bhmie(x,refrel,nang):
     if (nang < 2):
         nang = 2
     
-    pii = 4.*numpy.arctan(1.)
+    pii = 4.*numpy.arctan(1.)  
     dx = x
      
     drefrl = refrel
@@ -52,7 +52,7 @@ def bhmie(x,refrel,nang):
     #    Series expansion terminated after NSTOP terms
     #    Logarithmic derivatives calculated from NMX on down
     
-    xstop = x + 4.*math.pow(x,0.3333) + 2.0
+    xstop = x + 4.*math.pow(x,0.3333) + 2.0  # rough rule of thumb is that need ~x terms for convergence 
     
     nmx = max(xstop,ymod) + 15.0
     nmx=numpy.fix(nmx)
@@ -182,8 +182,13 @@ lamb = 532*1e-9 # wavelength
 r = 2*1e-6 # aerosol radius 
 
 x = (2*math.pi*r)/lamb
-refrel = 1.29 + 0.5*1j
+
+
+nr = numpy.arange(1,1.5,0.01)
+nI = numpy.arange(0.01,0.5,0.01)
 nang = 2
+
+refrel = 1.29 + 0.05*1j
 
 S1 = bhmie(x,refrel,nang)[0]
 S2 = bhmie(x,refrel,nang)[1]
@@ -195,21 +200,67 @@ Gsca = bhmie(x,refrel,nang)[5]
 xtest = numpy.arange(0.1,25,0.1)
 Qexttest = numpy.zeros(len(xtest))
 Qscatest = numpy.zeros(len(xtest))
+Qexttest1 = numpy.zeros(len(xtest))
+Qscatest1 = numpy.zeros(len(xtest))
+Qexttest2 = numpy.zeros(len(xtest))
+Qscatest2 = numpy.zeros(len(xtest))
+Qexttest3 = numpy.zeros(len(xtest))
+Qscatest3 = numpy.zeros(len(xtest))
+Qexttest4 = numpy.zeros(len(xtest))
+Qscatest4 = numpy.zeros(len(xtest))
 
+
+
+refrelr = [1 + 0.05*1j,1.1 + 0.05*1j,1.2 + 0.05*1j,1.3 + 0.05*1j,1.4 + 0.05*1j]
+refreli = [1.29 + 0.0*1j,1.29 + 0.01*1j,1.29 + 0.02*1j,1.29 + 0.03*1j,1.29 + 0.04*1j]
 
 for i in range(len(xtest)):
-    Qexttest[i] = bhmie(xtest[i],refrel,nang)[2]
-    Qscatest[i] = bhmie(xtest[i],refrel,nang)[3]
+    Qexttest[i] = bhmie(xtest[i],refreli[0],nang)[2]
+    Qscatest[i] = bhmie(xtest[i],refreli[0],nang)[3]
+    Qexttest1[i] = bhmie(xtest[i],refreli[1],nang)[2]
+    Qscatest1[i] = bhmie(xtest[i],refreli[1],nang)[3]
+    Qexttest2[i] = bhmie(xtest[i],refreli[2],nang)[2]
+    Qscatest2[i] = bhmie(xtest[i],refreli[2],nang)[3]
+    Qexttest3[i] = bhmie(xtest[i],refreli[3],nang)[2]
+    Qscatest3[i] = bhmie(xtest[i],refreli[3],nang)[3]
+    Qexttest4[i] = bhmie(xtest[i],refreli[4],nang)[2]
+    Qscatest4[i] = bhmie(xtest[i],refreli[4],nang)[3]
 
 
+#for i in range(len(xtest)):
+#    Qexttest[i] = bhmie(xtest[i],refrel,nang)[2]
+#    Qscatest[i] = bhmie(xtest[i],refrel,nang)[3]
+
+
+# =============================================================================
 fig = plt.figure()
 ax = plt.subplot(111)
-label1='Qext'
-label2='Qsca'
+label1='Qext' + str(refreli[0])
+label2='Qsca' + str(refreli[0])
+label3='Qext' + str(refreli[1])
+label4='Qsca' + str(refreli[1])
+label5='Qext' + str(refreli[2])
+label6='Qsca' + str(refreli[2])
+label7='Qext' + str(refreli[3])
+label8='Qsca' + str(refreli[3])
+label9='Qext' + str(refreli[4])
+label10='Qsca' + str(refreli[4])
+
 ax.plot(xtest, Qexttest,'*', label=label1 )
-ax.plot(xtest, Qscatest,'o', label=label2 )
+#ax.plot(xtest, Qscatest,'o', label=label2 )
+ax.plot(xtest, Qexttest1,'*', label=label3 )
+#ax.plot(xtest, Qscatest1,'o', label=label4 )
+ax.plot(xtest, Qexttest2,'*', label=label5 )
+#ax.plot(xtest, Qscatest2,'o', label=label6 )
+ax.plot(xtest, Qexttest3,'*', label=label7 )
+#ax.plot(xtest, Qscatest3,'o', label=label8 )
+ax.plot(xtest, Qexttest4,'*', label=label9 )
+#ax.plot(xtest, Qscatest4,'o', label=label10 )
+
 plt.xlabel('x')
-#plt.ylabel('Gaussian beam width / m')
-#plt.title('')
-ax.legend()
+plt.title('')
+namelabel = 'imagnvariationext.png'
+ax.legend(prop={'size': 7})
+plt.savefig(namelabel, bbox_inches='tight')
 plt.show
+# =============================================================================
